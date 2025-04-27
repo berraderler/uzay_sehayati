@@ -5,7 +5,6 @@ import java.util.*;
 public class Simulasyon {
 
     public static void baslatSimulasyon(ArrayList<Kisi> kisiler, HashMap<String, Gezegen> gezegenler, ArrayList<UzayAraci> araclar) throws InterruptedException {
-        // Kisileri uygun uzay aracına ekle
         for (Kisi k : kisiler) {
             for (UzayAraci u : araclar) {
                 if (u.getAdi().equals(k.getUzayAraciAdi())) {
@@ -17,23 +16,43 @@ public class Simulasyon {
         int saat = 0;
 
         while (true) {
-            Thread.sleep(100); // Simülasyon hızı
+            Thread.sleep(1);
             saat++;
 
-            // Gezegenlerde saat ilerlet
             for (Gezegen g : gezegenler.values()) {
                 g.saatIlerle();
             }
 
-            // Uzay araçlarında saat ilerlet
             for (UzayAraci u : araclar) {
-                u.saatGecir(1); // her adımda 1 saat geçiriyoruz
+                if (!u.isHareketEtti()) {
+                    // Gezegenin tarihine bak, çıkış tarihi gelmiş mi?
+                    Gezegen cikisGezegen = gezegenler.get(u.getCikis());
+                    if (cikisGezegen.getLocalDate().isAfter(u.getCikisTarihi()) || cikisGezegen.getLocalDate().isEqual(u.getCikisTarihi())) {
+                        u.setHareketEtti(true); // artık hareket etmeye başlıyor
+                    }
+                }
+                if (u.isHareketEtti()) {
+                    u.saatGecir(1); // sadece hareket etmeye başladıysa saat geçiriyoruz
+                }
+            }
+
+
+            for (UzayAraci u : araclar) {
+                Iterator<Kisi> iterator = u.getYolcular().iterator();
+                while (iterator.hasNext()) {
+                    Kisi k = iterator.next();
+                    k.saatGecir();
+                    if (k.getKalanOmur() <= 0) {
+                        u.getYolcular().remove(k);
+                        Gezegen gezegen = gezegenler.get(u.getVaris());
+                        gezegen.nufusAzalt(1);
+                    }
+                }
             }
 
             temizleEkran();
             yazdirDurum(gezegenler, araclar, saat);
 
-            // Eğer bütün araçlar ya vardıysa ya da imha olduysa döngüyü bitir
             boolean bitti = true;
             for (UzayAraci u : araclar) {
                 if (!u.isImha() && !u.isVardi()) {
@@ -59,10 +78,7 @@ public class Simulasyon {
         }
     }
 
-
     private static void yazdirDurum(HashMap<String, Gezegen> gezegenler, ArrayList<UzayAraci> araclar, int saat) {
-        System.out.println("Simülasyon Saati: " + saat + "\n");
-
         System.out.println("Uzay Araclari:");
         System.out.println(String.format("%-10s %-10s %-10s %-10s %-20s %-25s",
                 "Arac Adı", "Durum", "Çıkış", "Varış", "Hedefe Kalan Saat", "Hedefe Varacağı Tarih"));
@@ -72,7 +88,7 @@ public class Simulasyon {
             String varisTarihi;
             if (u.isImha()) varisTarihi = "--";
             else if (u.isVardi()) varisTarihi = "Varış yapıldı";
-            else varisTarihi = "Hesaplanıyor"; // Eğer özel bir tarih hesaplaması yapılmadıysa.
+            else varisTarihi = u.getHedefeVarisTarihi();
 
             System.out.println(String.format("%-10s %-10s %-10s %-10s %-20s %-25s",
                     u.getAdi(),
@@ -101,4 +117,5 @@ public class Simulasyon {
             System.out.printf(" %-12d |", g.getNufus());
         }
         System.out.println();
-    }}
+    }
+}

@@ -8,35 +8,35 @@ public class Gezegen {
     private int nufus;
     private LocalDate tarih;
     private int gununKacSaatOldugu;
-    private int saat; // Saat sayacı
+    private int saat;
 
     public Gezegen(String isim, int gununKacSaatOldugu, String baslangicTarihi) {
         this.isim = isim;
         this.gununKacSaatOldugu = gununKacSaatOldugu;
         this.tarih = LocalDate.parse(baslangicTarihi, DateTimeFormatter.ofPattern("d.M.yyyy"));
-        this.saat = 0; // Başlangıç saati
+        this.saat = 0;
+        this.nufus = 0;
     }
 
-    // Saat ilerleme fonksiyonu
     public void saatIlerle() {
-        saat++;  // Saati bir arttır
-        if (saat >= gununKacSaatOldugu) { // Eğer gün sonuna geldiysen
-            saat = 0;  // Saati sıfırla
-            tarih = tarih.plusDays(1);  // Tarihi bir gün arttır
+        saat++;
+        if (saat >= gununKacSaatOldugu) {
+            saat = 0;
+            tarih = tarih.plusDays(1);
         }
     }
 
-    // Nüfus artışı
     public void nufusArtir(int artis) {
         nufus += artis;
     }
 
-    // Nüfus azalışı
     public void nufusAzalt(int azalis) {
         nufus -= azalis;
+        if (nufus < 0) {
+            nufus = 0; 
+        }
     }
 
-    // Getter'lar
     public String getIsim() {
         return isim;
     }
@@ -56,4 +56,23 @@ public class Gezegen {
     public int getGununKacSaatOldugu() {
         return gununKacSaatOldugu;
     }
+
+    public LocalDate getLocalDate() {
+        return tarih;
+    }
+
+    public static String tahminiVarisTarihi(Gezegen cikisGezegen, int kalanSaat, Gezegen varisGezegeni) {
+        int gunlukSaatCikis = cikisGezegen.getGununKacSaatOldugu();
+        
+        int kacGun = kalanSaat / gunlukSaatCikis;
+        if (kalanSaat % gunlukSaatCikis != 0) {
+            kacGun++;
+        }
+
+        LocalDate tahminiTarih = cikisGezegen.getLocalDate().plusDays(kacGun);
+        
+        return tahminiTarih.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+    }
+
+
 }
